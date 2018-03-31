@@ -12,6 +12,8 @@ function randomColor() {
 
 const PUB_NUB_CHANNEL = 'our-heart-channel';
 
+const isFacingEachother = state => state.isFacing && state.heartIsFacing;
+
 export default class App extends Component {
   constructor(props) {
     super(props);
@@ -19,7 +21,9 @@ export default class App extends Component {
     this.state = {
       location: null,
       heading: null,
+      isFacing: false,
       heart: null,
+      heartIsFacing: null,
       errorMessage: null
     };
 
@@ -27,6 +31,11 @@ export default class App extends Component {
       subscribeKey: 'sub-c-7e0dc9bc-255c-11e8-a8f3-22fca5d72012',
       publishKey: 'pub-c-93f9401b-d20d-4650-9e9d-6edff597cb61'
     });
+  }
+
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    if (isFacingEachother(this.state) && !isFacingEachother(prevState))
+      Alert.alert('Cute!');
   }
 
   componentWillMount() {
@@ -49,9 +58,17 @@ export default class App extends Component {
           return;
         }
 
-        this.setState({
-          heart: message.message.location
-        });
+        if (message.message.location) {
+          this.setState({
+            heart: message.message.location
+          });
+        }
+
+        if (message.message.isFacing) {
+          this.setState({
+            heartIsFacing: true
+          });
+        }
       },
       presence: function(presenceEvent) {
         // handle presence
@@ -86,13 +103,52 @@ export default class App extends Component {
 
   watchHeading = () => {
     Location.watchHeadingAsync(heading => {
-      this.setState({
-        heading
-      });
+      this.setState(
+        {
+          heading
+        },
+        () => {
+          // publish if facing
+          if (!this.state.heading || !this.state.location || !this.state.heart)
+            return null;
+
+          const heading = this.state.heading.trueHeading;
+          const origin = this.state.location.coords;
+          const destination = this.state.heart.coords;
+
+          const isFacing = this.isFacing({
+            heading,
+            origin,
+            destination,
+            precision: 2
+          });
+
+          if (!isFacing) return false;
+
+          this.setState(
+            {
+              isFacing
+            },
+            () => {
+              var publishConfig = {
+                channel: PUB_NUB_CHANNEL,
+                message: {
+                  user: USER,
+                  isFacing
+                }
+              };
+
+              this.pubnub.publish(publishConfig, function(status, response) {
+                console.log(status, response);
+              });
+            }
+          );
+        }
+      );
     });
   };
 
-  onMapPress = e => {
+  onPress = e => {
     var publishConfig = {
       channel: PUB_NUB_CHANNEL,
       message: {
@@ -158,28 +214,14 @@ export default class App extends Component {
     return heading >= bearing - precision && heading <= bearing + precision;
   };
 
-  alertIfFacingHeart = () => {
-    if (!this.state.heading || !this.state.location || !this.state.heart)
-      return null;
-
-    const heading = this.state.heading.trueHeading;
-    const origin = this.state.location.coords;
-    const destination = this.state.heart.coords;
-
-    if (this.isFacing({ heading, origin, destination, precision: 2 }))
-      Alert.alert('Facing your heart!');
-  };
-
   render() {
-    this.alertIfFacingHeart();
-
     return (
       <MapView
         style={{ flex: 1 }}
         showsUserLocation={true}
         showCompass={true}
         initialRegion={this.state.region}
-        onPress={this.onMapPress}
+        onPress={this.onPress}
       >
         {this.renderDirectionLine()}
         {this.renderHeartLine()}
