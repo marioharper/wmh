@@ -1,26 +1,59 @@
 import React, { Component } from "react";
-import { Platform, Text, View, StyleSheet } from "react-native";
+import { Platform, Text, View, StyleSheet, Alert } from "react-native";
 import { Constants, Location, Permissions, MapView } from "expo";
-import { computeDestinationPoint } from "geolib";
+import PubNub from "pubnub";
+import geolib from "geolib";
 
 function randomColor() {
   return `#${Math.floor(Math.random() * 16777215).toString(16)}`;
 }
 
-export default class App extends Component {
-  state = {
-    location: null,
-    heading: null,
-    heart: null,
-    errorMessage: null
-  };
+const PUB_NUB_CHANNEL = "our-heart-channel";
 
-  componentWillMount() {
-    this.getLocation();
-    this.getHeading();
+export default class App extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      location: null,
+      heading: null,
+      heart: null,
+      errorMessage: null
+    };
+
+    this.pubnub = new PubNub({
+      subscribeKey: "sub-c-7e0dc9bc-255c-11e8-a8f3-22fca5d72012",
+      publishKey: "pub-c-93f9401b-d20d-4650-9e9d-6edff597cb61"
+    });
   }
 
-  getLocation = async () => {
+  componentWillMount() {
+    this.configurePubNub();
+    this.watchLocation();
+    this.watchHeading();
+  }
+
+  configurePubNub = () => {
+    this.pubnub.addListener({
+      status: statusEvent => {
+        if (statusEvent.category === "PNConnectedCategory") {
+          console.log("subscribe connected");
+        }
+      },
+      message: function(message) {
+        console.log("New Message!!", message);
+      },
+      presence: function(presenceEvent) {
+        // handle presence
+      }
+    });
+
+    this.pubnub.subscribe({
+      channels: [PUB_NUB_CHANNEL]
+    });
+  };
+
+  watchLocation = async () => {
     let { status } = await Permissions.askAsync(Permissions.LOCATION);
     if (status !== "granted") {
       this.setState({
@@ -28,25 +61,20 @@ export default class App extends Component {
       });
     }
 
-    Location.watchPositionAsync(
-      {
-        enableHighAccuracy: true
-      },
-      location => {
-        this.setState({
-          location,
-          region: {
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
-            latitudeDelta: 0.1,
-            longitudeDelta: 0.05
-          }
-        });
-      }
-    );
+    Location.watchPositionAsync({ enableHighAccuracy: true }, location => {
+      this.setState({
+        location,
+        region: {
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+          latitudeDelta: 0.1,
+          longitudeDelta: 0.05
+        }
+      });
+    });
   };
 
-  getHeading = () => {
+  watchHeading = () => {
     Location.watchHeadingAsync(heading => {
       this.setState({
         heading
@@ -61,6 +89,14 @@ export default class App extends Component {
         color: randomColor()
       }
     });
+
+    var publishConfig = {
+      channel: PUB_NUB_CHANNEL,
+      message: "Hello from PubNub Docs!"
+    };
+    this.pubnub.publish(publishConfig, function(status, response) {
+      console.log(status, response);
+    });
   };
 
   renderDirectionLine = () => {
@@ -68,7 +104,7 @@ export default class App extends Component {
 
     const { latitude, longitude } = this.state.location.coords;
 
-    let headingPoint = computeDestinationPoint(
+    let headingPoint = geolib.computeDestinationPoint(
       {
         lat: latitude,
         lon: longitude
@@ -109,7 +145,27 @@ export default class App extends Component {
     );
   };
 
+  isFacing = ({ heading, origin, destination, precision = 0 }) => {
+    const bearing = geolib.getBearing(origin, destination);
+
+    return heading >= bearing - precision && heading <= bearing + precision;
+  };
+
+  alertIfFacingHeart = () => {
+    if (!this.state.heading || !this.state.location || !this.state.heart)
+      return null;
+
+    const heading = this.state.heading.trueHeading;
+    const origin = this.state.location.coords;
+    const destination = this.state.heart.coordinate;
+
+    if (this.isFacing({ heading, origin, destination, precision: 2 }))
+      Alert.alert("Facing your heart!");
+  };
+
   render() {
+    this.alertIfFacingHeart();
+
     return (
       <MapView
         style={{ flex: 1 }}
