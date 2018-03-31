@@ -1,14 +1,14 @@
-import React, { Component } from "react";
-import { Platform, Text, View, StyleSheet, Alert } from "react-native";
-import { Constants, Location, Permissions, MapView } from "expo";
-import PubNub from "pubnub";
-import geolib from "geolib";
+import React, { Component } from 'react';
+import { Platform, Text, View, StyleSheet, Alert } from 'react-native';
+import { Constants, Location, Permissions, MapView } from 'expo';
+import PubNub from 'pubnub';
+import geolib from 'geolib';
 
 function randomColor() {
   return `#${Math.floor(Math.random() * 16777215).toString(16)}`;
 }
 
-const PUB_NUB_CHANNEL = "our-heart-channel";
+const PUB_NUB_CHANNEL = 'our-heart-channel';
 
 export default class App extends Component {
   constructor(props) {
@@ -22,8 +22,8 @@ export default class App extends Component {
     };
 
     this.pubnub = new PubNub({
-      subscribeKey: "sub-c-7e0dc9bc-255c-11e8-a8f3-22fca5d72012",
-      publishKey: "pub-c-93f9401b-d20d-4650-9e9d-6edff597cb61"
+      subscribeKey: 'sub-c-7e0dc9bc-255c-11e8-a8f3-22fca5d72012',
+      publishKey: 'pub-c-93f9401b-d20d-4650-9e9d-6edff597cb61'
     });
   }
 
@@ -36,12 +36,20 @@ export default class App extends Component {
   configurePubNub = () => {
     this.pubnub.addListener({
       status: statusEvent => {
-        if (statusEvent.category === "PNConnectedCategory") {
-          console.log("subscribe connected");
+        if (statusEvent.category === 'PNConnectedCategory') {
+          console.log('subscribe connected');
         }
       },
-      message: function(message) {
-        console.log("New Message!!", message);
+      message: message => {
+        console.log('New Message!!', message);
+        // ignore messages from self
+        if (message.message.user === USER) {
+          return;
+        }
+
+        this.setState({
+          heart: message.message.location
+        });
       },
       presence: function(presenceEvent) {
         // handle presence
@@ -55,9 +63,9 @@ export default class App extends Component {
 
   watchLocation = async () => {
     let { status } = await Permissions.askAsync(Permissions.LOCATION);
-    if (status !== "granted") {
+    if (status !== 'granted') {
       this.setState({
-        errorMessage: "Permission to access location was denied"
+        errorMessage: 'Permission to access location was denied'
       });
     }
 
@@ -83,17 +91,11 @@ export default class App extends Component {
   };
 
   onMapPress = e => {
-    this.setState({
-      heart: {
-        coordinate: e.nativeEvent.coordinate,
-        color: randomColor()
-      }
-    });
-
     var publishConfig = {
       channel: PUB_NUB_CHANNEL,
-      message: "Hello from PubNub Docs!"
+      message: 'Hello from PubNub Docs!'
     };
+
     this.pubnub.publish(publishConfig, function(status, response) {
       console.log(status, response);
     });
@@ -137,8 +139,8 @@ export default class App extends Component {
             longitude: this.state.location.coords.longitude
           },
           {
-            latitude: this.state.heart.coordinate.latitude,
-            longitude: this.state.heart.coordinate.longitude
+            latitude: this.state.heart.coords.latitude,
+            longitude: this.state.heart.coords.longitude
           }
         ]}
       />
@@ -157,10 +159,10 @@ export default class App extends Component {
 
     const heading = this.state.heading.trueHeading;
     const origin = this.state.location.coords;
-    const destination = this.state.heart.coordinate;
+    const destination = this.state.heart.coords;
 
     if (this.isFacing({ heading, origin, destination, precision: 2 }))
-      Alert.alert("Facing your heart!");
+      Alert.alert('Facing your heart!');
   };
 
   render() {
@@ -184,7 +186,7 @@ export default class App extends Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center"
+    alignItems: 'center',
+    justifyContent: 'center'
   }
 });
