@@ -6,18 +6,27 @@ import geolib from "geolib";
 
 const PUB_NUB_CHANNEL = "our-heart-channel";
 
-const isFacingEachother = state => state.isFacing && state.heartIsFacing;
+const isFacing = ({ heading, origin, destination, precision = 0 }) => {
+  const bearing = geolib.getBearing(origin, destination);
+
+  // TODO: need to account for someone being directly due north. ie 0 degrees.
+
+  return heading >= bearing - precision && heading <= bearing + precision;
+};
+
+const isFacingEachother = state => state.isFacingHeart && state.isHeartFacing;
 
 export default class App extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
+      mapInitialRegion: null,
       location: null,
       heading: null,
-      isFacing: false,
+      isFacingHeart: false,
       heartLocation: null,
-      heartIsFacing: null,
+      isHeartFacing: false,
       errorMessage: null
     };
 
@@ -28,7 +37,7 @@ export default class App extends Component {
     });
 
     // do not listen to own messages (PubNub Stream Controller enabled for this feature)
-    this.pubnub.setFilterExpression(`uuid!=${this.pubnub.getUUID()}`);
+    // this.pubnub.setFilterExpression(`uuid!=${this.pubnub.getUUID()}`);
   }
 
   componentDidUpdate(prevProps, prevState, snapshot) {
@@ -53,8 +62,6 @@ export default class App extends Component {
         console.log("New Message!!", message);
 
         if (message.message.location) {
-          Alert.alert("Your heart has sent their location!");
-
           this.setState({
             heartLocation: message.message.location
           });
@@ -62,7 +69,7 @@ export default class App extends Component {
 
         if (message.message.isFacing) {
           this.setState({
-            heartIsFacing: true
+            isHeartFacing: true
           });
         }
       },
@@ -87,7 +94,7 @@ export default class App extends Component {
     Location.watchPositionAsync({ enableHighAccuracy: true }, location => {
       this.setState({
         location,
-        region: {
+        mapInitialRegion: {
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
           latitudeDelta: 0.1,
@@ -116,32 +123,32 @@ export default class App extends Component {
           const origin = this.state.location.coords;
           const destination = this.state.heartLocation.coords;
 
-          const isFacing = this.isFacing({
+          const isFacingHeart = isFacing({
             heading,
             origin,
             destination,
             precision: 2
           });
 
-          if (!isFacing) return false;
+          console.log("isfacingheart", isFacingHeart);
 
-          this.setState(
-            {
-              isFacing
-            },
-            () => {
-              var publishConfig = {
-                channel: PUB_NUB_CHANNEL,
-                message: {
-                  isFacing
-                }
-              };
+          // facing status has changed
+          if (isFacingHeart !== this.state.isFacingHeart) {
+            var publishConfig = {
+              channel: PUB_NUB_CHANNEL,
+              message: {
+                isFacing: isFacingHeart
+              }
+            };
 
-              this.pubnub.publish(publishConfig, function(status, response) {
-                console.log(status, response);
-              });
-            }
-          );
+            this.pubnub.publish(publishConfig, function(status, response) {
+              console.log(status, response);
+            });
+          }
+
+          this.setState({
+            isFacingHeart
+          });
         }
       );
     });
@@ -206,24 +213,30 @@ export default class App extends Component {
     );
   };
 
-  isFacing = ({ heading, origin, destination, precision = 0 }) => {
-    const bearing = geolib.getBearing(origin, destination);
-
-    return heading >= bearing - precision && heading <= bearing + precision;
-  };
-
   render() {
     return (
-      <MapView
-        style={{ flex: 1 }}
-        showsUserLocation={true}
-        showCompass={true}
-        initialRegion={this.state.region}
-        onPress={this.onPress}
-      >
-        {this.renderDirectionLine()}
-        {this.renderHeartLine()}
-      </MapView>
+      <View style={{ flex: 1 }}>
+        <MapView
+          style={{ flex: 1 }}
+          showsUserLocation={true}
+          showCompass={true}
+          initialRegion={this.state.mapInitialRegion}
+          onPress={this.onPress}
+        >
+          {this.renderDirectionLine()}
+          {this.renderHeartLine()}
+        </MapView>
+
+        <View style={{ flex: 1 }}>
+          <Text>{`Heart sent their location: ${Boolean(
+            this.state.heartLocation
+          )}`}</Text>
+          <Text>{`You are facing your heart: ${
+            this.state.isFacingHeart
+          }`}</Text>
+          <Text>{`Heart is facing you: ${this.state.isHeartFacing}`}</Text>
+        </View>
+      </View>
     );
   }
 }
