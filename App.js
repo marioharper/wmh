@@ -16,7 +16,7 @@ export default class App extends Component {
       location: null,
       heading: null,
       isFacing: false,
-      heart: null,
+      heartLocation: null,
       heartIsFacing: null,
       errorMessage: null
     };
@@ -56,7 +56,7 @@ export default class App extends Component {
           Alert.alert("Your heart has sent their location!");
 
           this.setState({
-            heart: message.message.location
+            heartLocation: message.message.location
           });
         }
 
@@ -105,12 +105,16 @@ export default class App extends Component {
         },
         () => {
           // publish if facing
-          if (!this.state.heading || !this.state.location || !this.state.heart)
+          if (
+            !this.state.heading ||
+            !this.state.location ||
+            !this.state.heartLocation
+          )
             return null;
 
           const heading = this.state.heading.trueHeading;
           const origin = this.state.location.coords;
-          const destination = this.state.heart.coords;
+          const destination = this.state.heartLocation.coords;
 
           const isFacing = this.isFacing({
             heading,
@@ -184,7 +188,7 @@ export default class App extends Component {
   };
 
   renderHeartLine = () => {
-    if (!this.state.location || !this.state.heart) return null;
+    if (!this.state.location || !this.state.heartLocation) return null;
 
     return (
       <MapView.Polyline
@@ -194,8 +198,8 @@ export default class App extends Component {
             longitude: this.state.location.coords.longitude
           },
           {
-            latitude: this.state.heart.coords.latitude,
-            longitude: this.state.heart.coords.longitude
+            latitude: this.state.heartLocation.coords.latitude,
+            longitude: this.state.heartLocation.coords.longitude
           }
         ]}
       />
