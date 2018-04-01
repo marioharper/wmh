@@ -9,10 +9,11 @@ const PUB_NUB_CHANNEL = "our-heart-channel";
 const isFacing = ({ heading, origin, destination, precision = 0 }) => {
   const bearing = geolib.getBearing(origin, destination);
 
-  // TODO: need to account for someone being directly due north. ie 0 degrees.
-
-  return heading >= bearing - precision && heading <= bearing + precision;
+  return angleDiff(heading, bearing) <= precision;
 };
+
+const angleDiff = (angle1, angle2) =>
+  Math.abs((angle1 - angle2 + 180 + 360) % 360 - 180);
 
 const isFacingEachother = state => state.isFacingHeart && state.isHeartFacing;
 
@@ -37,7 +38,7 @@ export default class App extends Component {
     });
 
     // do not listen to own messages (PubNub Stream Controller enabled for this feature)
-    // this.pubnub.setFilterExpression(`uuid!=${this.pubnub.getUUID()}`);
+    this.pubnub.setFilterExpression(`uuid!=${this.pubnub.getUUID()}`);
   }
 
   componentDidUpdate(prevProps, prevState, snapshot) {
