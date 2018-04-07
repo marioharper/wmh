@@ -23,13 +23,18 @@ const toDegree = radians => radians * (180 / Math.PI);
 export default function lowPassFilter(currentDegree, previousDegree, smoothing = 0.6) {
   if (previousDegree == null) return currentDegree;
 
-  let previousSin = Math.sin(toRadians(previousDegree));
-  let previousCos = Math.cos(toRadians(previousDegree));
+  const smoothValue = (curr, prev) => smoothing * prev + (1 - smoothing) * curr;
 
-  previousSin = smoothing * previousSin + (1 - smoothing) * Math.sin(toRadians(currentDegree));
-  previousCos = smoothing * previousCos + (1 - smoothing) * Math.cos(toRadians(currentDegree));
+  const previousSin = Math.sin(toRadians(previousDegree));
+  const previousCos = Math.cos(toRadians(previousDegree));
 
-  const degrees = toDegree(Math.atan2(toRadians(previousSin), toRadians(previousCos)));
+  const currentSin = Math.sin(toRadians(currentDegree));
+  const currentCos = Math.cos(toRadians(currentDegree));
+
+  const smoothedSin = smoothValue(currentSin, previousSin);
+  const smoothedCos = smoothValue(currentCos, previousCos);
+
+  const degrees = toDegree(Math.atan2(toRadians(smoothedSin), toRadians(smoothedCos)));
 
   return (degrees + 360) % 360;
 }
