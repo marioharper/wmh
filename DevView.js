@@ -53,7 +53,7 @@ const DevView = ({
   location,
   searching,
   heading,
-  heartLocation,
+  heart = {},
   isFacingHeart,
   isHeartFacing,
   onMapPress,
@@ -69,12 +69,12 @@ const DevView = ({
     <View style={{ flex: 1 }}>
       <MapView style={{ flex: 1 }} showsUserLocation showCompass initialRegion={mapInitialRegion}>
         {renderDirectionLine({ location, heading })}
-        {renderHeartLine({ location, heartLocation })}
+        {renderHeartLine({ location, heartLocation: heart.location })}
       </MapView>
 
       <View style={{ flex: 1 }}>
         <Text>{`searching: ${searching}`}</Text>
-        <Text>{`heartLocation: ${Boolean(heartLocation)}`}</Text>
+        <Text>{`heartLocation: ${Boolean(heart.location)}`}</Text>
         <Text>{`isFacingHeart: ${isFacingHeart}`}</Text>
         <Text>{`isHeartFacing: ${isHeartFacing}`}</Text>
       </View>
