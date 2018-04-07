@@ -1,13 +1,19 @@
 import React, { Component } from 'react';
 import { Constants } from 'expo';
 import PubNub from 'pubnub';
+import { Button, View } from 'react-native';
 import LocationWatcher from './src/components/LocationWatcher';
 import HeartWatcher from './src/components/HeartWatcher';
 import SearchScreen from './src/screens/Search';
+import DevScreen from './src/screens/Dev';
 
 const PUB_NUB_CHANNEL = 'our-heart-channel';
 
 export default class App extends Component {
+  state = {
+    devMode: false,
+  };
+
   constructor() {
     super();
 
@@ -38,12 +44,23 @@ export default class App extends Component {
         {({ heart }) => (
           <LocationWatcher>
             {({ location, heading }) => (
-              <SearchScreen
-                location={location}
-                heading={heading}
-                heart={heart}
-                publishMessage={this.publishMessage}
-              />
+              <View style={{ flex: 1, paddingTop: 25 }}>
+                <Button
+                  onPress={() => this.setState({ devMode: !this.state.devMode })}
+                  title="Toggle Dev View"
+                />
+
+                {this.state.devMode ? (
+                  <DevScreen location={location} heading={heading} heart={heart} />
+                ) : (
+                  <SearchScreen
+                    location={location}
+                    heading={heading}
+                    heart={heart}
+                    publishMessage={this.publishMessage}
+                  />
+                )}
+              </View>
             )}
           </LocationWatcher>
         )}

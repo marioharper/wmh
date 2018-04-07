@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Location } from 'expo';
+import lowPassFilter from '../utils/lowPassFilter';
 
 // Watches device location and heading and passes the values to its children via a render callback
 export default class LocationWatcher extends Component {
@@ -41,7 +42,21 @@ export default class LocationWatcher extends Component {
 
   watchHeading = () => {
     Location.watchHeadingAsync(heading => {
-      this.setState({ heading });
+      const magHeading = Math.round(
+        lowPassFilter(heading.magHeading, this.state.heading && this.state.heading.magHeading),
+      );
+
+      const trueHeading = Math.round(
+        lowPassFilter(heading.trueHeading, this.state.heading && this.state.heading.trueHeading),
+      );
+
+      this.setState({
+        heading: {
+          ...heading,
+          magHeading,
+          trueHeading,
+        },
+      });
     });
   };
 

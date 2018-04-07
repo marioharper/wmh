@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+// Listens to pubnub events that contain heart info and passes the values to its children via a render callback
 export default class HeartWatcher extends Component {
   propTypes = {
     children: PropTypes.func.isRequired,
@@ -23,8 +24,8 @@ export default class HeartWatcher extends Component {
     //   heart: {
     //     location: {
     //       coords: {
-    //         longitude: -90,
-    //         latitude: 30,
+    //         latitude: 40.0379,
+    //         longitude: -76.3055,
     //       },
     //     },
     //   },

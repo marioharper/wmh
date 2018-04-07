@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Button, Text, View, TouchableOpacity, StyleSheet } from 'react-native';
+import { Text, View, TouchableOpacity, StyleSheet } from 'react-native';
 import PropTypes from 'prop-types';
 import geolib from 'geolib';
 import DevView from '../../DevView';
@@ -88,24 +88,13 @@ export default class SearchScreen extends Component {
     }
 
     return (
-      <View style={{ flex: 1, paddingTop: 25 }}>
-        <Button
-          onPress={() => this.setState({ devView: !this.state.devView })}
-          title="Toggle Dev View"
-        />
-
-        <TouchableOpacity
-          style={{ flex: 1, justifyContent: 'center' }}
-          onPressIn={this.startSearch}
-          onPressOut={this.stopSearch}
-        >
-          {this.state.devView ? (
-            <DevView {...this.state} {...this.props} />
-          ) : (
-            <Text style={{ textAlign: 'center' }}>{text}</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity
+        style={{ flex: 1, justifyContent: 'center' }}
+        onPressIn={this.startSearch}
+        onPressOut={this.stopSearch}
+      >
+        <Text style={{ textAlign: 'center' }}>{text}</Text>
+      </TouchableOpacity>
     );
   }
 }
