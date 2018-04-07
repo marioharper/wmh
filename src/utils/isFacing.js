@@ -1,11 +1,11 @@
 import geolib from 'geolib';
 
-const angleDiff = (angle1, angle2) => Math.abs((angle1 - angle2 + 180 + 360) % 360 - 180);
+const degreeDiff = (degree1, degree2) => Math.abs((degree1 - degree2 + 180 + 360) % 360 - 180);
 
 export default function ({
   heading, origin, destination, precision = 0,
 }) {
   const bearing = geolib.getBearing(origin, destination);
 
-  return angleDiff(heading, bearing) <= precision;
+  return degreeDiff(heading, bearing) <= precision;
 }
