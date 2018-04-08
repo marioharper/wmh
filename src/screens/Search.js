@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import { Text, View, TouchableOpacity, StyleSheet } from 'react-native';
 import PropTypes from 'prop-types';
 import geolib from 'geolib';
-import DevView from '../../DevView';
 import isFacing from '../utils/isFacing';
 
 export default class SearchScreen extends Component {
