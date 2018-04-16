@@ -3,13 +3,13 @@ import PropTypes from 'prop-types';
 
 // Listens to pubnub events that contain heart info and passes the values to its children via a render callback
 export default class HeartWatcher extends Component {
-  propTypes = {
+  static propTypes = {
     children: PropTypes.func.isRequired,
-    pubnub: PropTypes.object.isRequired,
+    pubnub: PropTypes.object.isRequired
   };
 
   state = {
-    heart: null,
+    heart: null
   };
 
   constructor() {
@@ -39,9 +39,9 @@ export default class HeartWatcher extends Component {
         if (!message.heart) return;
 
         this.setState({
-          heart: message.message,
+          heart: message.message
         });
-      },
+      }
     });
   };
 
