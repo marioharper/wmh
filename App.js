@@ -1,50 +1,77 @@
 import React, { Component } from 'react';
-import { Constants } from 'expo';
-import PubNub from 'pubnub';
 import { Button, View } from 'react-native';
 import LocationWatcher from './src/components/LocationWatcher';
 import HeartWatcher from './src/components/HeartWatcher';
 import SearchScreen from './src/screens/Search';
 import DevScreen from './src/screens/Dev';
+import HeartLogo from './src/components/HeartLogo';
+import Login from './src/components/Login';
+import configureFirebase from './src/firebase';
+import configurePubNub from './src/pubnub';
+
+const firebase = configureFirebase();
+const pubnub = configurePubNub();
 
 const PUB_NUB_CHANNEL = 'our-heart-channel';
 
 export default class App extends Component {
   state = {
+    loading: true,
     devMode: false,
+    animationComplete: false,
   };
 
   constructor() {
     super();
 
-    this.pubnub = new PubNub({
-      uuid: Constants.deviceId,
-      subscribeKey: 'sub-c-7e0dc9bc-255c-11e8-a8f3-22fca5d72012',
-      publishKey: 'pub-c-93f9401b-d20d-4650-9e9d-6edff597cb61',
-    });
-
-    // do not listen to own messages (PubNub Stream Controller enabled for this feature)
-    this.pubnub.setFilterExpression(`uuid!=${this.pubnub.getUUID()}`);
-
-    this.pubnub.subscribe({
+    pubnub.subscribe({
       channels: [PUB_NUB_CHANNEL],
     });
   }
 
+  componentDidMount() {
+    this.authSubscription = firebase.auth().onAuthStateChanged(user => {
+      this.setState({
+        loading: false,
+        user,
+      });
+    });
+  }
+
+  componentWillUnmount() {
+    this.authSubscription();
+  }
+
   publishMessage = message => {
-    this.pubnub.publish({
+    pubnub.publish({
       channel: PUB_NUB_CHANNEL,
       message,
     });
   };
 
   render() {
+    if (this.state.loading || !this.state.user) {
+      return (
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <HeartLogo after={() => this.setState({ animationComplete: true })} />
+
+          <View style={{ position: 'absolute', bottom: 0 }}>
+            {!this.state.user && this.state.animationComplete && <Login />}
+          </View>
+        </View>
+      );
+    }
+
     return (
-      <HeartWatcher pubnub={this.pubnub}>
+      <HeartWatcher pubnub={pubnub}>
         {({ heart }) => (
           <LocationWatcher>
             {({ location, heading }) => (
               <View style={{ flex: 1, paddingTop: 25 }}>
+                <Button
+                  onPress={() => console.log('oi') && firebase.auth().signOut()}
+                  title="Sign Out"
+                />
                 <Button
                   onPress={() => this.setState({ devMode: !this.state.devMode })}
                   title="Toggle Dev View"
@@ -52,14 +79,13 @@ export default class App extends Component {
 
                 {this.state.devMode ? (
                   <DevScreen location={location} heading={heading} heart={heart} />
-                ) : (
-                  <SearchScreen
-                    location={location}
-                    heading={heading}
-                    heart={heart}
-                    publishMessage={this.publishMessage}
-                  />
-                )}
+                ) : // <SearchScreen
+                //   location={location}
+                //   heading={heading}
+                //   heart={heart}
+                //   publishMessage={this.publishMessage}
+                // />
+                null}
               </View>
             )}
           </LocationWatcher>
