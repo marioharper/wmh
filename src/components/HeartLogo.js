@@ -1,91 +1,49 @@
 import React from 'react';
-import { View, Animated, StyleSheet } from 'react-native';
+import { Animated, Dimensions, View, ART } from 'react-native';
 
-const size = 15;
+const { width: deviceWidth, height: deviceHeight } = Dimensions.get('window');
 
-const styles = StyleSheet.create({
-  block: {
-    width: size,
-    height: size,
-    backgroundColor: '#DA353F',
-  },
-  triangleCorner: {
-    width: 0,
-    height: 0,
-    backgroundColor: 'transparent',
-    borderStyle: 'solid',
-    borderRightWidth: size,
-    borderTopWidth: size,
-    borderRightColor: 'transparent',
-    borderTopColor: '#DA353F',
-  },
-  triangleCornerBottomRight: {
-    transform: [{ rotate: '180deg' }],
-  },
-  triangleCornerBottomLeft: {
-    transform: [{ rotate: '270deg' }],
-  },
-  triangleCornerTopRight: {
-    transform: [{ rotate: '90deg' }],
-  },
-});
+const { Surface, Shape } = ART;
 
-const Block = ({ style }) => <Animated.View style={[styles.block, style]} />;
+const AnimatedShape = Animated.createAnimatedComponent(Shape);
 
-const TriangleCorner = ({ style }) => <Animated.View style={[styles.triangleCorner, style]} />;
-
-const TriangleCornerBottomRight = () => <TriangleCorner style={styles.triangleCornerBottomRight} />;
-
-const TriangleCornerBottomLeft = () => <TriangleCorner style={styles.triangleCornerBottomLeft} />;
-
-const TriangleCornerTopRight = () => <TriangleCorner style={styles.triangleCornerTopRight} />;
-
-const TriangleCornerTopLeft = TriangleCorner;
+const HEART_SVG =
+  'M130.4-0.8c25.4 0 46 20.6 46 46.1 0 13.1-5.5 24.9-14.2 33.3L88 153.6 12.5 77.3c-7.9-8.3-12.8-19.6-12.8-31.9 0-25.5 20.6-46.1 46-46.2 19.1 0 35.5 11.7 42.4 28.4C94.9 11 111.3-0.8 130.4-0.8';
+const HEART_COLOR = 'rgb(226,38,77,1)';
 
 class HeartLogo extends React.Component {
-  constructor() {
-    super();
-
-    this.shown = new Animated.Value(0);
-  }
+  state = {
+    animation: new Animated.Value(0),
+  };
 
   componentDidMount() {
-    Animated.timing(this.shown, {
-      toValue: 1,
-      duration: 2000,
+    Animated.timing(this.state.animation, {
+      duration: 1000,
+      toValue: 28,
     }).start(this.props.after);
   }
 
   render() {
-    const opacity = this.shown;
+    const heartScale = this.state.animation.interpolate({
+      inputRange: [0, 6, 10, 12, 18],
+      outputRange: [0, 0.1, 0.5, 0.6, 0.5],
+      extrapolate: 'clamp',
+    });
+
+    const heartX = heartScale.interpolate({
+      inputRange: [0, 1],
+      outputRange: [125, 35],
+    });
+
+    const heartY = heartScale.interpolate({
+      inputRange: [0, 1],
+      outputRange: [125, 45],
+    });
 
     return (
-      <Animated.View style={{ opacity }}>
-        <View style={{ flexDirection: 'row' }}>
-          <TriangleCornerBottomRight />
-          <TriangleCornerBottomLeft />
-          <TriangleCornerBottomRight />
-          <TriangleCornerBottomLeft />
-        </View>
-        <View style={{ flexDirection: 'row' }}>
-          <Block />
-          <Block />
-          <Block />
-          <Block />
-        </View>
-        <View style={{ flexDirection: 'row' }}>
-          <TriangleCornerTopRight />
-          <Block />
-          <Block />
-          <TriangleCornerTopLeft />
-        </View>
-        <View style={{ flexDirection: 'row' }}>
-          <Block style={{ backgroundColor: 'transparent' }} />
-          <TriangleCornerTopRight />
-          <TriangleCornerTopLeft />
-          <Block style={{ backgroundColor: 'transparent' }} />
-        </View>
-      </Animated.View>
+      <Surface width={250} height={250} style={{ backgroundColor: 'transparent' }}>
+        <AnimatedShape d={HEART_SVG} x={heartX} y={heartY} scale={heartScale} fill={HEART_COLOR} />
+      </Surface>
     );
   }
 }

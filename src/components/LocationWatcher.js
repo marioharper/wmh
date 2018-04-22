@@ -1,18 +1,18 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Location } from 'expo';
+import { Location, Permissions } from 'expo';
 import lowPassFilter from '../utils/lowPassFilter';
 
 // Watches device location and heading and passes the values to its children via a render callback
 export default class LocationWatcher extends Component {
   static propTypes = {
-    children: PropTypes.func.isRequired
+    children: PropTypes.func.isRequired,
   };
 
   state = {
     location: null,
     heading: null,
-    errorMessage: null
+    errorMessage: null,
   };
 
   constructor() {
@@ -27,7 +27,7 @@ export default class LocationWatcher extends Component {
     let { status } = await Permissions.askAsync(Permissions.LOCATION);
     if (status !== 'granted') {
       this.setState({
-        errorMessage: 'Permission to access location was denied'
+        errorMessage: 'Permission to access location was denied',
       });
     }
   };
@@ -35,7 +35,7 @@ export default class LocationWatcher extends Component {
   watchLocation = async () => {
     Location.watchPositionAsync({ enableHighAccuracy: true }, location => {
       this.setState({
-        location
+        location,
       });
     });
   };
@@ -43,25 +43,19 @@ export default class LocationWatcher extends Component {
   watchHeading = () => {
     Location.watchHeadingAsync(heading => {
       const magHeading = Math.round(
-        lowPassFilter(
-          heading.magHeading,
-          this.state.heading && this.state.heading.magHeading
-        )
+        lowPassFilter(heading.magHeading, this.state.heading && this.state.heading.magHeading),
       );
 
       const trueHeading = Math.round(
-        lowPassFilter(
-          heading.trueHeading,
-          this.state.heading && this.state.heading.trueHeading
-        )
+        lowPassFilter(heading.trueHeading, this.state.heading && this.state.heading.trueHeading),
       );
 
       this.setState({
         heading: {
           ...heading,
           magHeading,
-          trueHeading
-        }
+          trueHeading,
+        },
       });
     });
   };

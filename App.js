@@ -55,7 +55,7 @@ export default class App extends Component {
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <HeartLogo after={() => this.setState({ animationComplete: true })} />
 
-          <View style={{ position: 'absolute', bottom: 0 }}>
+          <View style={{ position: 'absolute', bottom: 30 }}>
             {!this.state.user && this.state.animationComplete && <Login />}
           </View>
         </View>
@@ -68,10 +68,7 @@ export default class App extends Component {
           <LocationWatcher>
             {({ location, heading }) => (
               <View style={{ flex: 1, paddingTop: 25 }}>
-                <Button
-                  onPress={() => console.log('oi') && firebase.auth().signOut()}
-                  title="Sign Out"
-                />
+                <Button onPress={() => firebase.auth().signOut()} title="Sign Out" />
                 <Button
                   onPress={() => this.setState({ devMode: !this.state.devMode })}
                   title="Toggle Dev View"
@@ -79,13 +76,14 @@ export default class App extends Component {
 
                 {this.state.devMode ? (
                   <DevScreen location={location} heading={heading} heart={heart} />
-                ) : // <SearchScreen
-                //   location={location}
-                //   heading={heading}
-                //   heart={heart}
-                //   publishMessage={this.publishMessage}
-                // />
-                null}
+                ) : (
+                  <SearchScreen
+                    location={location}
+                    heading={heading}
+                    heart={heart}
+                    publishMessage={this.publishMessage}
+                  />
+                )}
               </View>
             )}
           </LocationWatcher>

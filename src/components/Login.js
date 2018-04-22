@@ -2,12 +2,13 @@ import React from 'react';
 import { View, Button } from 'react-native';
 import Expo from 'expo';
 import * as firebase from 'firebase';
-import { GOOGLE_ANDROID_CLIENT_ID } from 'react-native-dotenv';
+import { GOOGLE_ANDROID_CLIENT_ID, GOOGLE_IOS_CLIENT_ID } from 'react-native-dotenv';
 
 async function signInWithGoogleAsync() {
   try {
     const result = await Expo.Google.logInAsync({
       androidClientId: GOOGLE_ANDROID_CLIENT_ID,
+      iosClientId: GOOGLE_IOS_CLIENT_ID,
       scopes: ['profile', 'email'],
     });
 
