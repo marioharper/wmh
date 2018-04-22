@@ -79,14 +79,6 @@ export default class SearchScreen extends Component {
   };
 
   render() {
-    let text = 'Tap and hold to find heart...';
-
-    if (this.state.searching) {
-      text = 'Searching...';
-
-      if (this.state.isFacingHeart) text = 'Facing your heart!';
-    }
-
     return (
       <TouchableOpacity
         style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
