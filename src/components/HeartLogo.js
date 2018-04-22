@@ -1,5 +1,6 @@
 import React from 'react';
 import { Animated, Dimensions, View, ART } from 'react-native';
+import PropTypes from 'prop-types';
 
 const { width: deviceWidth, height: deviceHeight } = Dimensions.get('window');
 
@@ -12,23 +13,73 @@ const HEART_SVG =
 const HEART_COLOR = 'rgb(226,38,77,1)';
 
 class HeartLogo extends React.Component {
+  static defaultProps = {
+    beatSpeed: 200,
+    isSearching: false,
+  };
+
+  static propTypes = {
+    beatSpeed: PropTypes.number,
+    isSearching: PropTypes.bool,
+  };
+
   state = {
-    animation: new Animated.Value(0),
+    frames: new Animated.Value(0),
   };
 
   componentDidMount() {
-    Animated.timing(this.state.animation, {
-      duration: 1000,
-      toValue: 28,
-    }).start(this.props.after);
+    this.appear();
   }
 
-  render() {
-    const heartScale = this.state.animation.interpolate({
-      inputRange: [0, 6, 10, 12, 18],
-      outputRange: [0, 0.1, 0.5, 0.6, 0.5],
-      extrapolate: 'clamp',
-    });
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.isSearching !== this.props.isSearching) {
+      if (nextProps.isSearching) {
+        this.startHeartBeat();
+      } else {
+        this.stopHeartBeat();
+      }
+    }
+  }
+
+  appear = () => {
+    Animated.timing(this.state.frames, {
+      duration: 1000,
+      toValue: 30,
+    }).start();
+  };
+
+  startHeartBeat = () => {
+    this.animationLoop = Animated.loop(
+      Animated.timing(this.state.frames, {
+        duration: 1000,
+        toValue: 30,
+      }),
+    );
+
+    this.animationLoop.start();
+  };
+
+  stopHeartBeat = () => {
+    this.animationLoop.stop();
+    this.state.frames.setValue(30);
+  };
+
+  getHeart = () => {
+    let heartScale;
+
+    if (this.props.isSearching) {
+      heartScale = this.state.frames.interpolate({
+        inputRange: [0, 6, 10, 12, 18],
+        outputRange: [0.5, 0.6, 0.5, 0.6, 0.5],
+        extrapolate: 'clamp',
+      });
+    } else {
+      heartScale = this.state.frames.interpolate({
+        inputRange: [0, 6, 10, 12, 18],
+        outputRange: [0, 0.1, 0.5, 0.6, 0.5],
+        extrapolate: 'clamp',
+      });
+    }
 
     const heartX = heartScale.interpolate({
       inputRange: [0, 1],
@@ -41,8 +92,14 @@ class HeartLogo extends React.Component {
     });
 
     return (
+      <AnimatedShape d={HEART_SVG} x={heartX} y={heartY} scale={heartScale} fill={HEART_COLOR} />
+    );
+  };
+
+  render() {
+    return (
       <Surface width={250} height={250} style={{ backgroundColor: 'transparent' }}>
-        <AnimatedShape d={HEART_SVG} x={heartX} y={heartY} scale={heartScale} fill={HEART_COLOR} />
+        {this.getHeart()}
       </Surface>
     );
   }

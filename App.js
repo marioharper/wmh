@@ -53,11 +53,7 @@ export default class App extends Component {
     if (this.state.loading || !this.state.user) {
       return (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <HeartLogo after={() => this.setState({ animationComplete: true })} />
-
-          <View style={{ position: 'absolute', bottom: 30 }}>
-            {!this.state.user && this.state.animationComplete && <Login />}
-          </View>
+          <View>{!this.state.user && <Login />}</View>
         </View>
       );
     }

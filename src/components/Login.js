@@ -13,16 +13,9 @@ async function signInWithGoogleAsync() {
     });
 
     if (result.type === 'success') {
-      console.log('result', result);
       const credential = firebase.auth.GoogleAuthProvider.credential(result.idToken);
 
-      return firebase
-        .auth()
-        .signInWithCredential(credential)
-        .catch((error) => {
-          console.log('error', error);
-          // Handle Errors here.
-        });
+      return firebase.auth().signInWithCredential(credential);
     }
     return { cancelled: true };
   } catch (e) {

@@ -2,21 +2,21 @@ import React, { Component } from 'react';
 import { Text, View, TouchableOpacity, StyleSheet } from 'react-native';
 import PropTypes from 'prop-types';
 import geolib from 'geolib';
-
+import Heart from '../components/HeartLogo';
 import isFacing from '../utils/isFacing';
 
 export default class SearchScreen extends Component {
   static defaultProps = {
     heart: null,
     heading: null,
-    location: null
+    location: null,
   };
 
   static propTypes = {
     heart: PropTypes.object,
     heading: PropTypes.object,
     location: PropTypes.object,
-    publishMessage: PropTypes.func.isRequired
+    publishMessage: PropTypes.func.isRequired,
   };
 
   constructor(props) {
@@ -24,7 +24,7 @@ export default class SearchScreen extends Component {
 
     this.state = {
       devView: false,
-      searching: false
+      searching: false,
     };
   }
 
@@ -41,17 +41,17 @@ export default class SearchScreen extends Component {
       heading: heading.trueHeading,
       origin: location.coords,
       destination: heart.location.coords,
-      precision: 20
+      precision: 20,
     });
 
     this.setState({
-      isFacingHeart
+      isFacingHeart,
     });
   };
 
   startSearch = () => {
     this.setState({
-      searching: true
+      searching: true,
     });
 
     // send search info every 1 second
@@ -61,7 +61,7 @@ export default class SearchScreen extends Component {
       this.props.publishMessage({
         searching: true,
         isFacing: this.state.isFacingHeart,
-        location: this.props.location
+        location: this.props.location,
       });
     }, 1000);
   };
@@ -70,11 +70,11 @@ export default class SearchScreen extends Component {
     clearInterval(this.searchTimer);
 
     this.setState({
-      searching: false
+      searching: false,
     });
 
     this.props.publishMessage({
-      searching: false
+      searching: false,
     });
   };
 
@@ -89,11 +89,11 @@ export default class SearchScreen extends Component {
 
     return (
       <TouchableOpacity
-        style={{ flex: 1, justifyContent: 'center' }}
+        style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
         onPressIn={this.startSearch}
         onPressOut={this.stopSearch}
       >
-        <Text style={{ textAlign: 'center' }}>{text}</Text>
+        <Heart isSearching={this.state.searching} />
       </TouchableOpacity>
     );
   }
@@ -103,6 +103,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center'
-  }
+    justifyContent: 'center',
+  },
 });
